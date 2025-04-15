@@ -1,0 +1,632 @@
+creating of vm using terraform
+provider "azurerm" {
+  features {}
+  client_id       = "4733c731-eb76-4788-86d9-0b460cb18c87"
+  client_secret   = "nDO8Q~rWmNg283LFRCWCuFYck9mi54.TBuFLlbFi"
+  tenant_id       = "b13c8637-d13b-42d4-a355-99197cb3587e"
+  subscription_id = "553d55f6-fd0a-4590-b402-d9f67e26aba8"
+}
+
+resource "azurerm_resource_group" "rg" {
+  name     = "hello_rg"
+  location = "West Europe"
+}
+
+resource "azurerm_virtual_network" "vnet" {
+  name                = "hello_vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_subnet" "subnet01"{
+  name                 = "hello-subnet1"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.0.0/24"]
+}
+
+resource "azurerm_subnet" "subnet02"{
+    name                = "hello_subnet2"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_network_security_group" "nsg" {
+  name                = "hello_nsg"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  security_rule {
+    name                       = "test123"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+}
+
+resource "azurerm_network_interface" "nic" {
+  name                = "nic"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "testconfiguration1"
+    subnet_id                     = azurerm_subnet.subnet01.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+resource "azurerm_virtual_machine" "virtual" {
+  name                  = "vm1"
+  location              = azurerm_resource_group.rg.location
+  resource_group_name   = azurerm_resource_group.rg.name
+  network_interface_ids = [azurerm_network_interface.nic.id]
+  vm_size               = "Standard_DS1_v2"
+
+  # Uncomment this line to delete the OS disk automatically when deleting the VM
+  # delete_os_disk_on_termination = true
+
+  # Uncomment this line to delete the data disks automatically when deleting the VM
+  # delete_data_disks_on_termination = true
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
+  }
+  storage_os_disk {
+    name              = "myosdisk1"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+  os_profile {
+    computer_name  = "ubuntu"
+    admin_username = "rajesh"
+    admin_password = "Rajesh@99080!"
+  }
+  os_profile_linux_config {
+    disable_password_authentication = false
+  }
+  tags = {
+    environment = "staging"
+  }
+}
+
+terraform init : 
+terraform validate :
+terraform fmt:
+terraform plan:
+terraform apply --auto-approve :
+
+WORKSPACE:
+workspace is used to work on particular environment like dev,qat,uat,prod
+
+
+provider.tf
+
+provider "azurerm" {
+  features {}
+  client_id       = "4733c731-eb76-4788-86d9-0b460cb18c87"
+  client_secret   = "nDO8Q~rWmNg283LFRCWCuFYck9mi54.TBuFLlbFi"
+  tenant_id       = "b13c8637-d13b-42d4-a355-99197cb3587e"
+  subscription_id = "553d55f6-fd0a-4590-b402-d9f67e26aba8"
+}
+
+main.tf
+
+resource "azurerm_resource_group" "rg1" {
+  name     = var.azurerm_resource_group_name
+  location = var.location
+}
+
+resource "azurerm_virtual_network" "vnet" {
+  name                = var.azurerm_virtual_network_name
+  address_space       = var.address_space
+  location            = var.location
+  resource_group_name = var.azurerm_resource_group_name
+  depends_on          = [azurerm_resource_group.rg1]
+}
+
+resource "azurerm_subnet" "subnet01" {
+  name                 = var.azurerm_subnet01
+  resource_group_name  = var.azurerm_resource_group_name
+  virtual_network_name = var.azurerm_virtual_network_name
+  address_prefixes     = var.address_prefixes01
+  depends_on           = [azurerm_virtual_network.vnet]
+}
+
+resource "azurerm_subnet" "subnet02" {
+  name                 = var.azurerm_subnet02
+  resource_group_name  = var.azurerm_resource_group_name
+  virtual_network_name = var.azurerm_virtual_network_name
+  address_prefixes     = var.address_prefixes02
+  depends_on           = [azurerm_virtual_network.vnet]
+
+}
+
+
+variable.tf
+
+
+variable "azurerm_resource_group_name" {
+  type = string
+
+
+}
+
+variable "location" {
+  type = string
+
+}
+
+variable "azurerm_virtual_network_name" {
+  type = string
+}
+
+variable "address_space" {
+  type = list(any)
+}
+
+variable "azurerm_subnet01" {
+  type = string
+}
+
+variable "address_prefixes01" {
+  type = list(any)
+}
+
+variable "azurerm_subnet02" {
+  type = string
+}
+
+variable "address_prefixes02" {
+  type = list(any)
+}
+
+
+dev.tfvars
+
+azurerm_resource_group_name = "dev-rg"
+
+location = "australiacentral"
+
+azurerm_virtual_network_name = "dev_vnet"
+
+address_space = ["10.0.0.0/16"]
+
+azurerm_subnet01 = "dev-snet01"
+
+
+address_prefixes01 = ["10.0.0.0/24"]
+
+azurerm_subnet02 = "dev-snet02"
+address_prefixes02 = ["10.0.1.0/24"]
+
+qa.tfvars
+
+
+azurerm_resource_group_name = "qa-rg"
+
+location = "australiacentral"
+
+azurerm_virtual_network_name = "qa_vnet"
+
+address_space = ["10.0.0.0/16"]
+
+azurerm_subnet01 = "qa-snet01"
+
+
+address_prefixes01 = ["10.0.0.0/24"]
+
+azurerm_subnet02 = "qa-snet02"
+address_prefixes02 = ["10.0.1.0/24"]
+
+
+prod.tfvars
+
+
+azurerm_resource_group_name = "prod-rg"
+
+location = "australiacentral"
+
+azurerm_virtual_network_name = "prod_vnet"
+
+address_space = ["10.0.0.0/16"]
+
+azurerm_subnet01 = "prod-snet01"
+
+
+address_prefixes01 = ["10.0.0.0/24"]
+
+azurerm_subnet02 = "prod-snet02"
+address_prefixes02 = ["10.0.1.0/24"]
+
+terraform workspace list: it used to say how many workspaces is present
+terraform workspace new workspacename : it is used to create a newworkspace
+terraform workspace show : it shows in which workspace we present
+terraform  workspace select workspace : it is used to shift to particular workspace
+
+terraform workspace is used to run in differentt environments 
+
+
+
+TEERAFORM MODULES : it is used to run all envirornments in single workspace
+when we work on modules we have initialize the module by giving the command init everytime when we update or add new
+
+before creating module keep the  provider and main.tf file in one folder
+module=foldername
+in module folder add provider.tf,main.tf,var.tf
+later create a new file module
+
+
+module "dev" {
+  source                      = "./source"
+  azurerm_resource_group_name = "dev-rg"
+
+  location = "australiacentral"
+
+  azurerm_virtual_network_name = "dev_vnet"
+
+  address_space = ["10.0.0.0/16"]
+
+  azurerm_subnet01 = "dev-snet01"
+
+
+  address_prefixes01 = ["10.0.0.0/24"]
+
+  azurerm_subnet02   = "dev-snet02"
+  address_prefixes02 = ["10.0.1.0/24"]
+
+}
+
+
+module "qa" {
+  source                      = "./source"
+  azurerm_resource_group_name = "qa-rg"
+
+  location = "australiacentral"
+
+  azurerm_virtual_network_name = "qa_vnet"
+
+  address_space = ["10.0.0.0/16"]
+
+  azurerm_subnet01 = "qa-snet01"
+
+
+  address_prefixes01 = ["10.0.0.0/24"]
+
+  azurerm_subnet02   = "qa-snet02"
+  address_prefixes02 = ["10.0.1.0/24"]
+
+}
+
+
+module "uat" {
+  source                      = "./source"
+  azurerm_resource_group_name = "uat-rg"
+
+  location = "australiacentral"
+
+  azurerm_virtual_network_name = "uat_vnet"
+
+  address_space = ["10.0.0.0/16"]
+
+  azurerm_subnet01 = "uat-snet01"
+
+
+  address_prefixes01 = ["10.0.0.0/24"]
+
+  azurerm_subnet02   = "uat-snet02"
+  address_prefixes02 = ["10.0.1.0/24"]
+
+}
+
+module "prod" {
+  source                      = "./source"
+  azurerm_resource_group_name = "prod-rg"
+
+  location = "australiacentral"
+
+  azurerm_virtual_network_name = "prod_vnet"
+
+  address_space = ["10.0.0.0/16"]
+
+  azurerm_subnet01 = "prod-snet01"
+
+
+  address_prefixes01 = ["10.0.0.0/24"]
+
+  azurerm_subnet02   = "prod-snet02"
+  address_prefixes02 = ["10.0.1.0/24"]
+
+}
+
+DATA STORE:
+
+to store the data of modules
+cretae a file backend.tf
+
+to store terraform.tfstatefile data 
+create storage account and container
+ in vs code create a file along with modules
+terraform {
+    backend "azurerm"{
+        resource_group_name = "rajesh_rg"
+        storage_account_name = "terraformstorage12344"
+        container_name = "container1"
+        key = "dev.terraform.tfstate"
+    }
+}
+
+
+
+DATA IMPORT:
+it is used to get the  existing data which are creted manually in azurecloud
+
+provider "azurerm" {
+  features {}
+  client_id       = "4733c731-eb76-4788-86d9-0b460cb18c87"
+  client_secret   = "nDO8Q~rWmNg283LFRCWCuFYck9mi54.TBuFLlbFi"
+  tenant_id       = "b13c8637-d13b-42d4-a355-99197cb3587e"
+  subscription_id = "553d55f6-fd0a-4590-b402-d9f67e26aba8"
+}
+data "azurerm_resource_group" "rg" {
+  name = "rajesh_rg"
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name                = "rajesh_vnet"
+  resource_group_name = "rajesh_rg"
+
+
+if we want to know details of particular resources 
+output.tf
+
+output "azurerm_resource_group_name" {
+  value = data.azurerm_resource_group.rg.name
+}
+
+output "azurerm_resource_group_location" {
+  value = data.azurerm_resource_group.rg.location
+}
+
+output "azurerm_resource_group_id" {
+  value = data.azurerm_resource_group.rg.id
+}
+
+
+output "azurerm_virtual_network_name" {
+  value = data.azurerm_virtual_network.vnet.name
+}
+
+output "azurerm_virtual_network_space" {
+  value = data.azurerm_virtual_network.vnet.address_space
+}
+output "azurerm_virtual_network_sub" {
+  value = data.azurerm_virtual_network.vnet.subnets
+}
+
+if we want to create subnets in terraform add this code in main.tf
+
+provider "azurerm" {
+  features {}
+  client_id       = "4733c731-eb76-4788-86d9-0b460cb18c87"
+  client_secret   = "nDO8Q~rWmNg283LFRCWCuFYck9mi54.TBuFLlbFi"
+  tenant_id       = "b13c8637-d13b-42d4-a355-99197cb3587e"
+  subscription_id = "553d55f6-fd0a-4590-b402-d9f67e26aba8"
+}
+data "azurerm_resource_group" "rg" {
+  name = "rajesh_rg"
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name                = "rajesh_vnet"
+  resource_group_name = "rajesh_rg"
+}
+
+
+resource "azurerm_subnet" "subnet01" {
+  name                 = "subnet02"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.5.0/24"]
+}
+
+
+resource "azurerm_subnet" "subnet03" {
+  name                 = "subnet03"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.7.0/24"]
+}
+
+
+here i added two subnets using terraform
+
+if we want to add both rg and vnet to terraform  from azure cloud
+
+
+terraform import
+provider "azurerm" {
+  features {}
+  client_id       = "4733c731-eb76-4788-86d9-0b460cb18c87"
+  client_secret   = "nDO8Q~rWmNg283LFRCWCuFYck9mi54.TBuFLlbFi"
+  tenant_id       = "b13c8637-d13b-42d4-a355-99197cb3587e"
+  subscription_id = "553d55f6-fd0a-4590-b402-d9f67e26aba8"
+}
+data "azurerm_resource_group" "rg" {
+  name = "rajesh_rg"
+}
+
+resource "azurerm_resource_group" "rgn" {
+    name = "dev-rg"
+    location = "eastus"
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name                = "rajesh_vnet"
+  resource_group_name = "rajesh_rg"
+}
+
+ resource "azurerm_virtual_network" "vnetn" {
+   name                = "rajesh_vnet"
+   address_space       = ["10.0.0.0/16"]
+   location            = azurerm_resource_group.rg.location
+   resource_group_name = azurerm_resource_group.rg.name
+ }
+
+
+resource "azurerm_subnet" "subnet01" {
+  name                 = "subnet02"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.5.0/24"]
+}
+
+
+resource "azurerm_subnet" "subnet01" {
+  name                 = "subnet06"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.6.0/24"]
+}
+
+
+
+
+here we add a rg from azure to terraform 
+command is :terraform import azurerm_resource_group.rgn/subscriptions/553d55f6-fd0a-4590-b402-d9f67e26aba8/resourceGroups/rajesh_rg
+
+
+for adding vnet to terraform from azure cloud
+
+terraform import
+provider "azurerm" {
+  features {}
+  client_id       = "4733c731-eb76-4788-86d9-0b460cb18c87"
+  client_secret   = "nDO8Q~rWmNg283LFRCWCuFYck9mi54.TBuFLlbFi"
+  tenant_id       = "b13c8637-d13b-42d4-a355-99197cb3587e"
+  subscription_id = "553d55f6-fd0a-4590-b402-d9f67e26aba8"
+}
+data "azurerm_resource_group" "rg" {
+  name = "rajesh_rg"
+}
+
+resource "azurerm_resource_group" "rgn" {
+    name = "dev-rg"
+    location = "eastus"
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name                = "rajesh_vnet"
+  resource_group_name = "rajesh_rg"
+}
+
+ resource "azurerm_virtual_network" "vnetn" {
+   name                = "rajesh_vnet"
+   address_space       = ["10.0.0.0/16"]
+   location            = azurerm_resource_group.rg.location
+   resource_group_name = azurerm_resource_group.rg.name
+ }
+
+
+resource "azurerm_subnet" "subnet01" {
+  name                 = "subnet02"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.5.0/24"]
+}
+
+
+resource "azurerm_subnet" "subnet02" {
+  name                 = "subnet03"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.7.0/24"]
+}
+
+terraform import azurerm_virtual_network.vnetn subscripition_id
+
+afetr importing the data from azure cloud again we want to  apply we have tomremove the data command in the  main.tf file
+
+in output also remove data
+
+provider "azurerm" {
+  features {}
+  client_id       = "4733c731-eb76-4788-86d9-0b460cb18c87"
+  client_secret   = "nDO8Q~rWmNg283LFRCWCuFYck9mi54.TBuFLlbFi"
+  tenant_id       = "b13c8637-d13b-42d4-a355-99197cb3587e"
+  subscription_id = "553d55f6-fd0a-4590-b402-d9f67e26aba8"
+}
+resource "azurerm_resource_group" "rgn" {
+    name = "dev-rg"
+    location = "eastus"
+}
+
+resource "azurerm_virtual_network" "vnetn" {
+  name                = "rajesh_vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+
+resource "azurerm_subnet" "subnet01" {
+  name                 = "subnet02"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.5.0/24"]
+}
+
+
+resource "azurerm_subnet" "subnet03" {
+  name                 = "subnet03"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.7.0/24"]
+}
+
+
+output "azurerm_resource_group_name" {
+  value = azurerm_resource_group.rg.name
+}
+
+output "azurerm_resource_group_location" {
+  value = azurerm_resource_group.rg.location
+}
+
+output "azurerm_resource_group_id" {
+  value = azurerm_resource_group.rg.id
+}
+
+
+output "azurerm_virtual_network_name" {
+  value = azurerm_virtual_network.vnet.name
+}
+
+output "azurerm_virtual_network_space" {
+  value = azurerm_virtual_network.vnet.address_space
+}
+output "azurerm_virtual_network_sub" {
+  value = azurerm_virtual_network.vnet.subnets
+}
+
+
+
+if we want to create multiple subnets or vm any thing in one time 
+resource "azurerm_subnet" "subnet01" {
+count                   = 5
+  name                 = "subnet$(count.index)"  if need index from 1  not from zero subnet$(count.index+1)
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.$(count.index ).0/24"]
+}
