@@ -630,3 +630,8 @@ count                   = 5
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.$(count.index ).0/24"]
 }
+terraform life cycle:
+
+Prevent Destroy: it will not delete the resources
+Ignore changes: it will not replicate the changes we have done to server
+Depends on: it will depend on another resource to create.
