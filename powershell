@@ -1,0 +1,71 @@
+in powershell we call the commands as command-get
+
+Get-Host :to know host
+Get-Command: it will display commands
+Get-help Get-service -online
+(Get-Command).count: total number of commands
+(Get-Services).count: to know how many services are present
+Get-Service-Displayname "network" :to know which network present in system
+Get-Service "Wmi"
+Get_Service | where-object {$_.status -eq "Running"} :to see the running services
+"WinRM" | Get-service
+
+
+..........................................................................................................................................
+
+
+to create aa file in powershell
+
+New-Item -path c:\ps1 -Name folder1 -ItemType directory  : to create a folder
+New-Item -path c:\ps1 -Name folder2 -ItemType directory  : to create a folder
+New-Item -path c:\ps1\folder1 -Name 4.txt -ItemType file -Value "Welcome to notepad" :to create files in folders
+Copy-Item -path c:\ps1\folder1\* -Destination C:\ps1\folder2 : to copy data from folder1 to folder2
+Remove-Item -Path c:\ps1\folder2\* : to delete the file
+Move-Item -path c:\ps1\folder1\* -Destination c:\ps1\folder2 : to move files from folder1 to folder2
+
+
+$num = 0..10
+foreach($i in $num){
+write-Output "$i is a number"
+}
+
+
+
+foreach($i in 0..10){
+if($i%2 -eq 0){
+write-Output "$i is a even number"
+}
+else {
+write-Output "$i is a odd number"
+}
+}
+
+ $num =1..10
+ for each($num1 in $num){
+ $result =  2 * $num1
+ write-Output  "2 * $num = $result"
+
+ if want 3 table number
+
+  $num =1..10
+  $jar = 2
+ for each($num1 in $num){
+ $result =  $jar * $num1
+ write-Output  "$jar * $num = $result"
+ 
+ $num = 1..100
+ foreach($i in $num){
+ 
+ New-Item -path c:\ps1\folder1/$i.txt -ItemType file -Value "Welcome to notepad"
+ New-Item -path c:\ps1\folder2/$i.doc -ItemType file -Value "Welcome to notepad"
+ }
+
+ foreach($i in 0..10){
+if($i%2 -eq 0){
+ New-Item -path c:\ps1\folder1/$i.txt -ItemType file -Value "Welcome to notepad"
+}
+else {
+ New-Item -path c:\ps1\folder2/$i.doc -ItemType file -Value "Welcome to notepad" 
+}
+}
+ 
