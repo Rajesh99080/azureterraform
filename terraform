@@ -635,3 +635,37 @@ terraform life cycle:
 Prevent Destroy: it will not delete the resources
 Ignore changes: it will not replicate the changes we have done to server
 Depends on: it will depend on another resource to create.
+
+Terraform Lifecycle:
+
+Prevent_destroy: used to keep secure our resources without destroying.
+
+provider "aws" {
+region = "us-east-1"
+}
+
+resource "aws_s3_bucket" "one" {
+bucket = "rahamshaik9988tetrrbcuket"
+}
+
+resource "aws_ebs_volume" "two" {
+size = 20
+availability_zone = "us-east-1b"
+tags = {
+Name = "raham-ebs"
+}
+}
+
+resource "aws_iam_user" "three" {
+name = "rahams"
+}
+
+resource "aws_instance" "four" {
+ami = "ami-03eb6185d756497f8"
+instance_type = "t2.micro"
+tags = {
+Name = "Raham-terraserver"
+}
+lifecycle {
+prevent_destroy = true
+}
