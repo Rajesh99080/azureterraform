@@ -1,0 +1,73 @@
+trigger:
+  - master
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: "**/*.sln"
+  buildPlatform: Any CPU
+  buildConfiguration: Release
+stages:
+  - stage: Build
+    displayName: Build
+    jobs:
+      - job: Build
+        steps:
+          - task: VSBuild@1
+            inputs:
+              solution: $(solution)
+              msbuildArgs: /p:DeployOnBuild=true /p:WebPublishMethod=Package
+                /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true
+                /p:PackageLocation="$(build.artifactStagingDirectory)"
+              platform: $(buildPlatform)
+              configuration: $(buildConfiguration)
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: $(Build.ArtifactStagingDirectory)
+              ArtifactName: drop
+              publishLocation: Container
+
+  - stage: Dev
+    displayName: Dev
+    jobs:
+      - job: Dev
+        steps:
+           - task: DownloadBuildArtifacts@1
+             inputs:
+               buildType: 'current'
+               downloadType: 'single'
+               artifactName: 'drop'
+               downloadPath: '$(System.ArtifactsDirectory)'
+           - task: AzureRmWebAppDeployment@5
+             inputs:
+               ConnectionType: 'AzureRM'
+               azureSubscription: 'Azure subscription 1 (553d55f6-fd0a-4590-b402-d9f67e26aba8)'
+               appType: 'webApp'
+               WebAppName: 'rajesh'
+               packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
+              
+            
+  - stage: uat
+    displayName: uat
+    jobs:
+      - deployment: uat
+        environment: uat
+        strategy:
+         runOnce:
+          deploy:
+            
+           steps:
+             - task: DownloadBuildArtifacts@1
+               inputs:
+                buildType: 'current'
+                downloadType: 'single'
+                artifactName: 'drop'
+                downloadPath: '$(System.ArtifactsDirectory)'
+
+             - task: AzureRmWebAppDeployment@5
+               inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: 'Azure subscription 1 (553d55f6-fd0a-4590-b402-d9f67e26aba8)'
+                appType: 'webApp'
+                WebAppName: 'rajesh'
+                packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
