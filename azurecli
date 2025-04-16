@@ -1,0 +1,59 @@
+this is to login from powershell IIS to azurecli :
+az login --service-principal -u "4733c731-eb76-4788-86d9-0b460cb18c87" -p "aDI8Q~miyeD1r6Su4tmQXwBCNYQAcsAKPgtbobA6" --tenant "b13c8637-d13b-42d4-a355-99197cb3587e"
+
+to create resources in powershell IIS
+New-AzResourceGroup -Name karthik-rg -Location "East Us 2" :to crete resource group
+
+to crete subnet1 here first we crete subnet later vnet:
+$subnet01=New-AzvirtualNetworksubnetConfig -Name subnet1 -Addressprefix 10.0.9.0/24
+$subnet02=New-AzvirtualNetworksubnetConfig -Name subnet2 -Addressprefix 10.0.10.0/24
+
+to creat virtual network:
+$Vnet=New-AzVirtualNetwork  -Name karthik-vnet ResourceGroupName prod-rg -Location "East Us 2" -Subnet $Subnet01,$Subnet02 -AddressPrefix 10.0.0.0/16 
+
+to create vm:
+
+New-AzVm -ResourceGroupName 'karthik-rg' -Name 'karthik_vm' -Location 'eastus2' -Image 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest' -VirtualNetworkName 'karthik-vnet' -SubnetName 'subnet1' -SecurityGroupName 'myNetworkSecurityGroup' -PublicIpAddressName 'myPublicIpAddress' -OpenPorts 80,3389
+$user = "Rajesh"
+$pwd = ConvertTo-SecureString -String "Rajesh@99080" -AsPlainText -Force
+$Credential = New-Object  -TypeName System.Management.Automation.PSCredential -ArgumentList $user ,$pwd
+
+if we want to add windows webserver:
+Invoke-AzVMRunCommand -ResourceGroupName 'karthik-rg -VMName 'karthik_vm' -CommandId 'RunPowerShellScript' -ScriptString 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
+
+if we want to delete the resource group
+Remove-AzResourceGroup -Name 'karthik-rg' -Force
+
+if we want taake gap between the resources while creating we can add this way:
+Write-Host "create rg"
+Start-Sleep -Seconds 10
+
+this the complete code to create vm using powershell:
+
+az login --service-principal -u "4733c731-eb76-4788-86d9-0b460cb18c87" -p "aDI8Q~miyeD1r6Su4tmQXwBCNYQAcsAKPgtbobA6" --tenant "b13c8637-d13b-42d4-a355-99197cb3587e"
+
+
+New-AzResourceGroup -Name karthik-rg -Location "East Us 2"
+Write-Host "create rg"
+Start-Sleep -Seconds 10
+
+$subnet01=New-AzvirtualNetworksubnetConfig -Name subnet1 -Addressprefix 10.0.9.0/24
+$subnet02=New-AzvirtualNetworksubnetConfig -Name subnet2 -Addressprefix 10.0.10.0/24
+Write-Host "create subnet"
+Start-Sleep -Seconds 10
+$Vnet=New-AzVirtualNetwork  -Name karthik-vnet ResourceGroupName prod-rg -Location "East Us 2" -Subnet $Subnet01,$Subnet02 -AddressPrefix 10.0.0.0/16
+Write-Host "create vnet"
+Start-Sleep -Seconds 10
+New-AzVm -ResourceGroupName 'karthik-rg' -Name 'karthik_vm' -Location 'eastus2' -Image 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest' -VirtualNetworkName 'karthik-vnet' -SubnetName 'subnet1' -SecurityGroupName 'myNetworkSecurityGroup' -PublicIpAddressName 'myPublicIpAddress' -OpenPorts 80,3389
+$user = "Rajesh"
+$pwd = ConvertTo-SecureString -String "Rajesh@99080" -AsPlainText -Force
+$Credential = New-Object  -TypeName System.Management.Automation.PSCredential -ArgumentList $user ,$pwd
+Write-Host "create vm "
+Start-Sleep -Seconds 10
+
+Invoke-AzVMRunCommand -ResourceGroupName 'karthik-rg -VMName 'karthik_vm' -CommandId 'RunPowerShellScript' -ScriptString 'Install-WindowsFeature -Name Web-Server -IncludeManagementTools'
+Write-Host "deploy web application"
+Start-Sleep -Seconds 10
+Remove-AzResourceGroup -Name 'karthik-rg' -Force
+Write-Host "delete resource group"
+Start-Sleep -Seconds 10
