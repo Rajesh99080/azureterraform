@@ -33,7 +33,7 @@ this the complete code to create vm using powershell:
 az login --service-principal -u "4733c731-eb76-4788-86d9-0b460cb18c87" -p "aDI8Q~miyeD1r6Su4tmQXwBCNYQAcsAKPgtbobA6" --tenant "b13c8637-d13b-42d4-a355-99197cb3587e"
 
 
-New-AzResourceGroup -Name karthik-rg -Location "East Us 2"
+New-AzResourceGroup -Name "karthik-rg" -Location "East Us 2"
 Write-Host "create rg"
 Start-Sleep -Seconds 10
 
@@ -41,7 +41,7 @@ $subnet01=New-AzvirtualNetworksubnetConfig -Name subnet1 -Addressprefix 10.0.9.0
 $subnet02=New-AzvirtualNetworksubnetConfig -Name subnet2 -Addressprefix 10.0.10.0/24
 Write-Host "create subnet"
 Start-Sleep -Seconds 10
-$Vnet=New-AzVirtualNetwork  -Name karthik-vnet ResourceGroupName prod-rg -Location "East Us 2" -Subnet $Subnet01,$Subnet02 -AddressPrefix 10.0.0.0/16
+$Vnet=New-AzVirtualNetwork  -Name "karthik-vnet" -ResourceGroupName prod-rg -Location "East Us 2" -Subnet $Subnet01,$Subnet02 -AddressPrefix 10.0.0.0/16
 Write-Host "create vnet"
 Start-Sleep -Seconds 10
 New-AzVm -ResourceGroupName 'karthik-rg' -Name 'karthik_vm' -Location 'eastus2' -Image 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest' -VirtualNetworkName 'karthik-vnet' -SubnetName 'subnet1' -SecurityGroupName 'myNetworkSecurityGroup' -PublicIpAddressName 'myPublicIpAddress' -OpenPorts 80,3389
@@ -57,3 +57,71 @@ Start-Sleep -Seconds 10
 Remove-AzResourceGroup -Name 'karthik-rg' -Force
 Write-Host "delete resource group"
 Start-Sleep -Seconds 10
+
+
+
+Automation Account:
+
+
+in free trail automation account allows some regions only 
+eastus , eastus2,westus, northeurope,southeastasia,japanwest only
+
+create automation account in azure
+in process automation create run book
+
+
+Connect-AzAccount -ServicePrincipal -Credential $Credential -Tenant $TenantId
+$AppId = "4733c731-eb76-4788-86d9-0b460cb18c87"
+$ClientSecret = "aDI8Q~miyeD1r6Su4tmQXwBCNYQAcsAKPgtbobA6"
+$TenantId = "b13c8637-d13b-42d4-a355-99197cb3587e"
+
+$SecurePassword = ConvertTo-SecureString $ClientSecret -AsPlainText -Force
+$Credential = New-Object System.Management.Automation.PSCredential($AppId, $SecurePassword)
+
+
+
+Connect-AzAccount -ServicePrincipal -Credential $Credential -Tenant $TenantId
+az login --service-principal -u "4733c731-eb76-4788-86d9-0b460cb18c87" -p "aDI8Q~miyeD1r6Su4tmQXwBCNYQAcsAKPgtbobA6" --tenant "b13c8637-d13b-42d4-a355-99197cb3587e"
+Write-Host "login to az"
+Start-Sleep -Seconds 10
+
+New-AzResourceGroup -Name "prod-rg" -Location "East Us 2"
+
+
+Write-Host "create rg"
+Start-Sleep -Seconds 10
+
+$subnet01=New-AzvirtualNetworksubnetConfig -Name subnet1 -Addressprefix 10.0.9.0/24
+$subnet02=New-AzvirtualNetworksubnetConfig -Name subnet2 -Addressprefix 10.0.10.0/24
+Write-Host "create subnet"
+Start-Sleep -Seconds 10
+
+$Vnet=New-AzVirtualNetwork  -Name "prod-vnet" -ResourceGroupName prod-rg -Location "East Us 2" -Subnet $Subnet01,$Subnet02 -AddressPrefix 10.0.0.0/16
+Write-Host "create vnet"
+Start-Sleep -Seconds 10
+
+after running the code sucessfuly make the code publish
+if we make publish then only we can schedule the jobs
+next create jobs at what time it has to deploy and at what time it has to destroy
+
+create vm
+next create monitoring 
+in monitor create action groups
+afterthat create rules
+select resource-in which  name we created vm
+select condition -add percentage cpu  and fill the details as per reqired
+action -select existing action group which we created previously 
+details -FILL the details as per required
+save and create
+
+then we will get mail or message based on our requirement
+
+
+
+
+
+
+
+      
+
+
